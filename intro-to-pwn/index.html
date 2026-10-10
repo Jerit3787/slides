@@ -776,16 +776,74 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top: 14px;">
-        <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Visual Memory State: Normal vs Exploited</h3>
-        <pre class="code-block">    NORMAL STACK                       EXPLOITED STACK
-   +-----------------------+          +-----------------------+
-   | Return Address: 0x401290 |          | Return Address: <span class="highlight-green">0x4011b6</span> |  &lt;-- <span class="highlight-green">Jumps to win()!</span>
-   +-----------------------+          +-----------------------+
-   | Saved RBP: 0x7fffffffe860|          | Saved RBP: <span class="highlight-red">0x4141414141414141</span>|  &lt;-- <span class="highlight-red">Clobbered!</span>
-   +-----------------------+          +-----------------------+
-   | buffer[64]: "Hello"   |          | buffer[64]: <span class="highlight-red">'A' * 64</span>   |  &lt;-- <span class="highlight-red">Filled to brim!</span>
-   +-----------------------+</pre>
+      <div class="grid-2" style="margin-top: 14px;">
+        <!-- Left: Normal Stack -->
+        <div class="card" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(15, 25, 42, 0.85);">
+          <div class="card-header" style="border-color: rgba(59, 130, 246, 0.3);">
+            <span class="card-title" style="color: #60a5fa; display: flex; align-items: center; gap: 8px;">
+              <span>🛡️</span> Normal Stack (Safe Input)
+            </span>
+            <span class="brand-badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">UNTOUCHED</span>
+          </div>
+
+          <div class="stack-frame-box">
+            <div class="frame-cell" style="background: #172554; border-left: 6px solid #3b82f6; color: #bfdbfe;">
+              <div>
+                <strong style="color: #93c5fd;">Return Address (RIP)</strong><br>
+                <code style="font-size: 0.82rem; color: #60a5fa;">0x0000000000401290 (&lt;main+80&gt;)</code>
+              </div>
+              <span class="brand-badge" style="background: #1e3a8a; color: #93c5fd; font-size: 0.7rem;">Safe Return</span>
+            </div>
+            <div class="frame-cell" style="background: #422006; border-left: 6px solid #eab308; color: #fef08a;">
+              <div>
+                <strong style="color: #fde047;">Saved Base Pointer (RBP)</strong><br>
+                <code style="font-size: 0.82rem; color: #fef9c3;">0x00007fffffffe860</code>
+              </div>
+              <span style="font-size: 0.72rem; color: #fde047; font-weight: bold;">Valid Frame</span>
+            </div>
+            <div class="frame-cell" style="background: #064e3b; border-left: 6px solid #10b981; color: #a7f3d0; padding: 14px 16px;">
+              <div>
+                <strong style="color: #6ee7b7;">buffer[64]</strong><br>
+                <code style="font-size: 0.82rem; color: #a7f3d0;">"Hello\0" (5 Bytes) + 59 Free Bytes</code>
+              </div>
+              <span class="brand-badge" style="background: #065f46; color: #a7f3d0; font-size: 0.7rem;">Within Bounds</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Exploited Stack -->
+        <div class="card" style="border-color: rgba(159, 239, 0, 0.4); background: rgba(15, 25, 42, 0.85); box-shadow: 0 0 20px var(--htb-green-glow);">
+          <div class="card-header" style="border-color: rgba(159, 239, 0, 0.3);">
+            <span class="card-title" style="color: var(--htb-green); display: flex; align-items: center; gap: 8px;">
+              <span>🎯</span> Exploited Stack (ret2win Hijack)
+            </span>
+            <span class="brand-badge" style="background: var(--htb-green); color: #000;">PWNED!</span>
+          </div>
+
+          <div class="stack-frame-box">
+            <div class="frame-cell" style="background: #14351a; border-left: 6px solid var(--htb-green); color: #bbf7d0; box-shadow: inset 0 0 12px rgba(159,239,0,0.25);">
+              <div>
+                <strong style="color: var(--htb-green);">Return Address (RIP)</strong><br>
+                <code style="font-size: 0.82rem; color: #ffffff; font-weight: bold;">0x00000000004011b6 (&lt;win&gt;)</code>
+              </div>
+              <span class="brand-badge" style="background: var(--htb-green); color: #000; font-size: 0.7rem;">🎯 Jumps to win()</span>
+            </div>
+            <div class="frame-cell" style="background: #4c0519; border-left: 6px solid var(--danger-red); color: #fecdd3;">
+              <div>
+                <strong style="color: #fda4af;">Saved Base Pointer (RBP)</strong><br>
+                <code style="font-size: 0.82rem; color: #fecdd3;">0x4141414141414141 ("AAAAAAAA")</code>
+              </div>
+              <span class="brand-badge" style="background: var(--danger-red); color: #fff; font-size: 0.7rem;">Clobbered</span>
+            </div>
+            <div class="frame-cell" style="background: #3b0764; border-left: 6px solid var(--cyber-purple); color: #e9d5ff; padding: 14px 16px;">
+              <div>
+                <strong style="color: #d8b4fe;">buffer[64]</strong><br>
+                <code style="font-size: 0.82rem; color: #e9d5ff;">'A' * 64 (Completely Filled to Capacity)</code>
+              </div>
+              <span class="brand-badge" style="background: #581c87; color: #e9d5ff; font-size: 0.7rem;">Overflowed</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1236,7 +1294,7 @@ cd /Users/&lt;username&gt;/.../htb-meetup-pwn
           <div class="card">
             <h4 style="color: var(--cyber-purple); font-size: 1rem; margin-bottom: 8px;">Speaker &amp; Slides</h4>
             <p style="font-size: 0.85rem; color: var(--text-muted);">
-              Danish Hakim (<a href="https://github.com/danishhakim" target="_blank" style="color: #fff;">@danishhakim</a>)<br>
+              Danish Hakim (<a href="https://github.com/jerit3787" target="_blank" style="color: #fff;">@jerit3787</a>)<br>
               Domain: <a href="https://slides.danplace.tech" target="_blank" style="color: var(--cyber-blue);">slides.danplace.tech</a>
             </p>
           </div>
