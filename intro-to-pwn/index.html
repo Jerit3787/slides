@@ -332,7 +332,8 @@
   }
 
   .frame-cell.ret-addr { background: #4c0519; color: #fecdd3; border-left: 6px solid var(--danger-red); font-weight: bold; }
-  .frame-cell.saved-rbp { background: #713f12; color: #fef08a; border-left: 6px solid #eab308; font-weight: bold; }
+  .frame-cell.saved-rbp, .frame-cell.saved-ebp { background: #713f12; color: #fef08a; border-left: 6px solid #eab308; font-weight: bold; }
+  .frame-cell.saved-ebx { background: #3b0764; color: #e9d5ff; border-left: 6px solid var(--cyber-purple); font-weight: bold; }
   .frame-cell.buffer { background: #064e3b; color: #a7f3d0; border-left: 6px solid #10b981; }
   .frame-cell.corrupted-cell { background: rgba(255, 51, 102, 0.25) !important; color: #fff !important; }
   .frame-cell.pwned-cell { background: rgba(159, 239, 0, 0.25) !important; color: var(--htb-green) !important; }
@@ -727,22 +728,22 @@
               <span>Parameters / Previous State</span>
             </div>
             <div class="frame-cell ret-addr">
-              <span>🎯 Return Address (RIP)</span>
-              <span>8 Bytes (Target of Attack!)</span>
+              <span>🎯 Return Address (<strong style="color: #fff;">RIP</strong> in x64 / <strong style="color: #fff;">EIP</strong> in x86)</span>
+              <span>8B (x64) / 4B (x86)</span>
             </div>
             <div class="frame-cell saved-rbp">
-              <span>Saved Base Pointer (RBP)</span>
-              <span>8 Bytes (Caller Frame Anchor)</span>
+              <span>Saved Base Pointer (<strong style="color: #fff;">RBP</strong> in x64 / <strong style="color: #fff;">EBP</strong> in x86)</span>
+              <span>8B (x64) / 4B (x86)</span>
             </div>
             <div class="frame-cell buffer" style="padding: 22px 16px;">
               <div>
                 <strong>Local Buffer (char buffer[64])</strong><br>
-                <span style="font-size: 0.78rem; color: #6ee7b7;">▲ Memory writes grow upward toward RBP &amp; RIP</span>
+                <span style="font-size: 0.78rem; color: #6ee7b7;">▲ Memory writes grow upward toward Frame Pointer &amp; Return Address</span>
               </div>
               <span>64 Bytes</span>
             </div>
             <div class="frame-cell" style="background: #040810; color: #64748b; font-size: 0.78rem; text-align: center;">
-              [Low Address - Top of Stack (RSP)]
+              [Low Address - Top of Stack (RSP in x64 / ESP in x86)]
             </div>
           </div>
         </div>
@@ -952,23 +953,50 @@ Found at offset [exact number]!</pre>
 
       <div class="grid-2">
         <div class="card">
-          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Visual Offset Breakdown (76 Bytes)</h3>
-          <div class="stack-frame-box" style="margin-bottom: 12px;">
-            <div class="frame-cell ret-addr">
-              <span>Return Address: win()</span>
-              <span>0x080491a6 (Target Address)</span>
+          <h3 style="color: var(--htb-green); font-size: 1rem; margin-bottom: 8px;">Visual Offset Breakdown (76 Bytes to EIP)</h3>
+          <div class="stack-frame-box" style="margin-bottom: 10px;">
+            <div class="frame-cell ret-addr" style="padding: 10px 14px;">
+              <div>
+                <strong style="color: #fda4af;">🎯 Return Address (EIP)</strong><br>
+                <code style="font-size: 0.8rem; color: #fff;">0x080491a6 (&lt;win&gt;)</code>
+              </div>
+              <span class="brand-badge" style="background: var(--danger-red); color: #fff; font-size: 0.7rem;">[EBP + 0x4] • 4B</span>
             </div>
-            <div class="frame-cell saved-rbp">
-              <span>Saved EBP + EBX alignment</span>
-              <span>4B EBP + 4B EBX = 8 Bytes</span>
+            <div class="frame-cell saved-ebp" style="padding: 10px 14px;">
+              <div>
+                <strong style="color: #fde047;">Saved Base Pointer (EBP)</strong><br>
+                <code style="font-size: 0.78rem; color: #fef08a;">Stack[0x0] (Caller Frame Anchor)</code>
+              </div>
+              <span class="brand-badge" style="background: #eab308; color: #000; font-size: 0.7rem;">[EBP + 0x0] • 4B</span>
             </div>
-            <div class="frame-cell buffer">
-              <span>char buffer[64]</span>
-              <span>64 Bytes</span>
+            <div class="frame-cell saved-ebx" style="padding: 10px 14px;">
+              <div>
+                <strong style="color: #d8b4fe;">Saved EBX (Ghidra: local_8)</strong><br>
+                <code style="font-size: 0.78rem; color: #e9d5ff;">Restored via: MOV EBX, [EBP + local_8]</code>
+              </div>
+              <span class="brand-badge" style="background: var(--cyber-purple); color: #fff; font-size: 0.7rem;">[EBP - 0x8] • 4B</span>
+            </div>
+            <div class="frame-cell buffer" style="padding: 10px 14px;">
+              <div>
+                <strong style="color: #6ee7b7;">buffer[64] (Ghidra: Stack[-0x4c])</strong><br>
+                <code style="font-size: 0.78rem; color: #a7f3d0;">64B input array + padding (0x4c = 76)</code>
+              </div>
+              <span class="brand-badge" style="background: #10b981; color: #000; font-size: 0.7rem;">[EBP - 0x4c] • 64B</span>
             </div>
           </div>
-          <p style="font-size: 0.88rem; color: var(--text-muted);">
-            Total Offset Calculation: <code class="inline">64 + 4 + 4 = 76 bytes</code>!
+
+          <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px;">
+            <div style="font-size: 0.8rem; font-weight: bold; color: var(--cyber-blue); margin-bottom: 4px;">🔍 Ghidra ↔ CPU Register Reference:</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.76rem; font-family: monospace;">
+              <div><span style="color: #94a3b8;">Target:</span> <strong style="color: #fda4af;">EIP</strong> (Instruction Pointer)</div>
+              <div><span style="color: #94a3b8;">Frame:</span> <strong style="color: #fde047;">EBP</strong> (Stack[0x0])</div>
+              <div><span style="color: #94a3b8;">local_8:</span> <strong style="color: #d8b4fe;">EBX</strong> (Stack[-0x8])</div>
+              <div><span style="color: #94a3b8;">buffer:</span> <strong style="color: #6ee7b7;">0x4c = 76B</strong> (Stack[-0x4c])</div>
+            </div>
+          </div>
+
+          <p style="font-size: 0.82rem; color: var(--text-muted);">
+            Total Offset Calculation: <code class="inline">64B (buffer) + 4B (EBX / local_8) + 4B (EBP) = 76 bytes to EIP</code>!
           </p>
         </div>
 
@@ -1071,8 +1099,28 @@ p.interactive()
           </thead>
           <tbody>
             <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Instruction Pointer (Target)</td>
+              <td style="padding: 10px;"><strong style="color: #60a5fa;">EIP</strong> (32-bit / 4 bytes)</td>
+              <td style="padding: 10px;"><strong style="color: var(--htb-green);">RIP</strong> (64-bit / 8 bytes)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Frame / Base Pointer</td>
+              <td style="padding: 10px;"><strong style="color: #60a5fa;">EBP</strong> (Stack[0x0] / 4 bytes)</td>
+              <td style="padding: 10px;"><strong style="color: var(--htb-green);">RBP</strong> (Stack[0x0] / 8 bytes)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Stack Top Pointer</td>
+              <td style="padding: 10px;"><strong style="color: #60a5fa;">ESP</strong> (32-bit)</td>
+              <td style="padding: 10px;"><strong style="color: var(--htb-green);">RSP</strong> (64-bit)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
+              <td style="padding: 10px; font-weight: bold;">Callee-Saved Register in Frame</td>
+              <td style="padding: 10px;"><strong style="color: #d8b4fe;">EBX</strong> (Ghidra: <code class="inline">local_8</code> at <code class="inline">Stack[-0x8]</code>)</td>
+              <td style="padding: 10px; color: var(--text-muted);">None (Registers passed in ABI)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #1e293b;">
               <td style="padding: 10px; font-weight: bold;">Hands-on Offset</td>
-              <td style="padding: 10px; font-family: monospace;">76 bytes (64B + 4B EBX + 4B EBP)</td>
+              <td style="padding: 10px; font-family: monospace;">76 bytes (64B + 4B EBX/local_8 + 4B EBP)</td>
               <td style="padding: 10px; font-family: monospace;">72 bytes (64B + 8B RBP)</td>
             </tr>
             <tr style="border-bottom: 1px solid #1e293b;">
@@ -1121,7 +1169,7 @@ p.interactive()
               <strong>Target Function:</strong> <code class="inline">get_flag()</code> at <code class="inline">0x08049216</code>
             </div>
             <div class="diagram-node active-node" style="width: 100%; text-align: left; padding: 8px 12px;">
-              <strong>Assembly Calculation:</strong> <code class="inline">sub esp, 0x24</code> (36B buffer) + 4B EBX + 4B EBP = <strong>44 Bytes</strong>
+              <strong>Assembly Calculation:</strong> <code class="inline">sub esp, 0x24</code> (36B buffer) + 4B EBX + 4B EBP = <strong>44 Bytes to EIP</strong>
             </div>
           </div>
         </div>
